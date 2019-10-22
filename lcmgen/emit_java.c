@@ -84,7 +84,7 @@ void setup_java_options(getopt_t *gopt)
                       "String added to class declarations");
     getopt_add_string(gopt, 0, "jdefaultpkg", "lcmtypes",
                       "Default Java package if LCM type has no package");
-    getopt_add_string(gopt, 0,   "jpkg", "lcmtypes", 
+    getopt_add_string(gopt, 0,   "jpkg-prefix", "lcmtypes", 
                       "Java package to prepend to all LCM types. Causes jdefaultpkg option to be ignored");
 }
 
@@ -108,8 +108,8 @@ static int jdefaultpkg_warned = 0;
 
 const char *make_fqn(lcmgen_t *lcm, const char *type_name)
 {
-    if(getopt_was_specified(lcm->gopt, "jpkg"))
-        return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jpkg"), type_name);
+    if(getopt_was_specified(lcm->gopt, "jpkg-prefix"))
+        return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jpkg-prefix"), type_name);
 
     if (strchr(type_name, '.') != NULL)
         return type_name;
@@ -125,11 +125,11 @@ const char *make_fqn(lcmgen_t *lcm, const char *type_name)
 
 const char *make_package(lcmgen_t *lcm, const char *package_name)
 {
-    if(getopt_was_specified(lcm->gopt, "jpkg")) {
+    if(getopt_was_specified(lcm->gopt, "jpkg-prefix")) {
         if (strlen(package_name) > 0)
-            return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jpkg"), package_name);
+            return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jpkg-prefix"), package_name);
         else
-            return g_strdup_printf("%s", getopt_get_string(lcm->gopt, "jpkg"));
+            return g_strdup_printf("%s", getopt_get_string(lcm->gopt, "jpkg-prefix"));
     } else {
         if (strlen(package_name) > 0)
             return g_strdup_printf("%s", package_name);
