@@ -84,6 +84,8 @@ void setup_java_options(getopt_t *gopt)
                       "String added to class declarations");
     getopt_add_string(gopt, 0, "jdefaultpkg", "lcmtypes",
                       "Default Java package if LCM type has no package");
+    getopt_add_string(gopt, 0,   "jpkg", "lcmtypes", 
+                      "Java package to prepend to all LCM types. Causes jdefaultpkg option to be ignored");
 }
 
 typedef struct {
@@ -106,6 +108,9 @@ static int jdefaultpkg_warned = 0;
 
 const char *make_fqn(lcmgen_t *lcm, const char *type_name)
 {
+    if(getopt_was_specified(lcm->gopt, "jpkg"))
+        return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jpkg"), type_name);
+
     if (strchr(type_name, '.') != NULL)
         return type_name;
 
@@ -116,6 +121,21 @@ const char *make_fqn(lcmgen_t *lcm, const char *type_name)
     }
 
     return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jdefaultpkg"), type_name);
+}
+
+const char *make_package(lcmgen_t *lcm, const char *package_name)
+{
+    if(getopt_was_specified(lcm->gopt, "jpkg")) {
+        if (strlen(package_name) > 0)
+            return g_strdup_printf("%s.%s", getopt_get_string(lcm->gopt, "jpkg"), package_name);
+        else
+            return g_strdup_printf("%s", getopt_get_string(lcm->gopt, "jpkg"));
+    } else {
+        if (strlen(package_name) > 0)
+            return g_strdup_printf("%s", package_name);
+        else
+            return g_strdup_printf("%s", getopt_get_string(lcm->gopt, "jdefaultpkg"));
+    }   
 }
 
 /** # -> replace1
@@ -395,10 +415,7 @@ int emit_java(lcmgen_t *lcm)
         if (f == NULL)
             return -1;
 
-        if (strlen(le->enumname->package) > 0)
-            emit(0, "package %s;", le->enumname->package);
-        else
-            emit(0, "package %s;", getopt_get_string(lcm->gopt, "jdefaultpkg"));
+        emit(0, "package %s;", make_package(lcm, le->enumname->package));
 
         // clang-format off
         emit(0, " ");
@@ -509,11 +526,8 @@ int emit_java(lcmgen_t *lcm)
              " * DO NOT MODIFY BY HAND!!!!\n"
              " */\n");
 
-        if (strlen(lr->structname->package) > 0)
-            emit(0, "package %s;", lr->structname->package);
-        else
-            emit(0, "package %s;", getopt_get_string(lcm->gopt, "jdefaultpkg"));
-
+        emit(0, "package %s;", make_package(lcm, lr->structname->package));
+        
         emit(0, " ");
         emit(0, "import java.io.*;");
 
